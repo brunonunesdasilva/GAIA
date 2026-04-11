@@ -149,7 +149,9 @@ DATABASES = {
     }
 }
 
-if DEBUG:
+REDIS_URL = config('REDIS_URL', default='').strip()
+
+if DEBUG or not REDIS_URL:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -159,7 +161,7 @@ else:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+            'LOCATION': REDIS_URL,
         }
     }
 
