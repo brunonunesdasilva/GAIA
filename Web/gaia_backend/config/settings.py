@@ -18,22 +18,23 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY WARNING: nao revele a chave secreta em producao!
 SECRET_KEY = config("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING: nao rode com debug ligado em producao!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 # PRODUÇÃO: Adicione o domínio do servidor aqui
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    default='localhost,127.0.0.1,gaia-2spq.onrender.com',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
 )
+
+# Validação explícita de configuração em produção.
+# Evita subir a aplicação com hosts inválidos ou ausentes.
+if not DEBUG:
+    assert ALLOWED_HOSTS, "ALLOWED_HOSTS deve ser configurado em produção"
 
 
 # Application definition
@@ -58,9 +59,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -78,13 +79,14 @@ if DEBUG:
         "http://127.0.0.1:5000",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "https://gaia-2spq.onrender.com",
     ]
     CORS_ALLOW_ALL_ORIGINS = False
 else:
     # PRODUÇÃO: Apenas origens específicas (CONFIGURAR NO .env)
     CORS_ALLOWED_ORIGINS = config(
         'CORS_ALLOWED_ORIGINS',
-        default='',
+        default='https://gaia-1-xmds.onrender.com',
         cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
     )
     CORS_ALLOW_ALL_ORIGINS = False
@@ -102,13 +104,14 @@ if DEBUG:
         "http://127.0.0.1:5000",
         "http://localhost:8000",      # Backend (para fazer requisições para si mesmo)
         "http://127.0.0.1:8000",
+        "https://gaia-2spq.onrender.com",
     ]
 else:
     # PRODUÇÃO: Apenas o domínio real (CONFIGURAR NO .env)
     # Exemplo: CSRF_TRUSTED_ORIGINS=https://www.seuprojeto.com.br,https://seuprojeto.com.br
     CSRF_TRUSTED_ORIGINS = config(
         'CSRF_TRUSTED_ORIGINS',
-        default='',
+        default='https://gaia-1-xmds.onrender.com',
         cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
     )
 
@@ -141,24 +144,10 @@ DATABASES = {
         "NAME": config("DB_NAME"),
         "USER": config("DB_USER"),
         "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
     }
 }
-
-# ===============================================
-#  Cache Configuration (necessário para Rate Limiting)
-# ===============================================
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-#         'LOCATION': 'gaia-ratelimit-cache',
-#         'TIMEOUT': 3600,  # 1 hora
-#         'OPTIONS': {
-#             'MAX_ENTRIES': 10000
-#         }
-#     }
-# }
 
 if DEBUG:
     CACHES = {
@@ -223,19 +212,21 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50  # Aumentado de 20 para 50 para reduzir problemas de paginação
+    'PAGE_SIZE': 50,
+    'MAX_PAGE_SIZE': 100,
 }
 
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+    'AUTH_HEADER_TYPES': ('Bearer',),
 
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # 1 hora
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # 7 dias
@@ -252,12 +243,18 @@ SIMPLE_JWT = {
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Pastas de estáticos adicionais (desenvolvimento)
+# Mantém compatibilidade mesmo se a pasta ainda não existir.
+PROJECT_STATIC_DIR = BASE_DIR / 'static'
+if PROJECT_STATIC_DIR.exists():
+    STATICFILES_DIRS = [PROJECT_STATIC_DIR]
+
 # ===============================================
 # SEGURANÇA: httpOnly Cookies (Proteção contra XSS)
 # ===============================================
 # EM DESENVOLVIMENTO: Ativado para testar; em PRODUÇÃO: controlled by if not DEBUG
 SESSION_COOKIE_HTTPONLY = True      #  Cookies inacessíveis via JavaScript
-CSRF_COOKIE_HTTPONLY = True         #  CSRF token inacessível via JavaScript
+CSRF_COOKIE_HTTPONLY = False         #  Caso True quebra SPAs Com httpOnly
 SESSION_COOKIE_SAMESITE = 'Lax'     #  Mitiga CSRF attacks
 CSRF_COOKIE_SAMESITE = 'Lax'        #  Mitiga CSRF attacks
 
@@ -277,7 +274,7 @@ AUTH_USER_MODEL = 'authentication.Usuario'
 
 SYNC_CONFIG = {
     'SQLITE_PATH': os.path.join(BASE_DIR, 'soil_analysis.db'),
-    'PG_CONN_STRING': 'postgresql://seu_usuario:sua_senha@localhost:5432/soil_analysis_site'
+    'PG_CONN_STRING': config("SYNC_PG_CONN_STRING")  # Conexão completa para PostgreSQL
 }
 
 # --- CONFIGURAÇÃO DE ENVIO DE E-MAIL REAL (GMAIL) ---

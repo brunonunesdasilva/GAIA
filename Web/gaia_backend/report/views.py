@@ -256,6 +256,12 @@ class LaudoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def upload_pdf(self, request, pk=None):
         """Upload de arquivo PDF para laudo"""
+
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Apenas administradores podem fazer upload'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         laudo = self.get_object()
         
@@ -274,22 +280,14 @@ class LaudoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Validação 2: Verificar MIME type (mais flexível para PDFs assinados)
-        # PDFs assinados ou criados por ferramentas diferentes podem ter MIME types variados
-        allowed_mime_types = [
-            'application/pdf',
-            'application/PDF',
-            'application/x-pdf',
-            'application/x-bzpdf',
-            'application/x-gzpdf',
-            'application/pdf+xz',
-            None  # Permite quando MIME type não é reconhecido
-        ]
-        
-        if arquivo.content_type not in allowed_mime_types:
-            pass
-        else:
-            pass
+        # Validação 2: Verificar MIME type
+        ALLOWED_MIME = {'application/pdf', 'application/x-pdf'}
+
+        if arquivo.content_type not in ALLOWED_MIME:
+            return Response(
+                {'error': 'Tipo de arquivo inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Validação 3: Verificar tamanho (máximo 10MB)
         max_size = 10 * 1024 * 1024  # 10MB em bytes
@@ -555,65 +553,6 @@ class AmostraViewSet(viewsets.ModelViewSet):
         serializer.save()
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @method_decorator(ratelimit(key='user', rate='10/m', method='ALL', block=True))
-    @action(detail=True, methods=['post'])
-    def gerar_laudo(self, request, pk=None):
-        """
-        Gera PDF de laudo para uma amostra
-        POST /api/amostras/{id}/gerar_laudo/
-        Body: {"agreement": "Texto do convênio (opcional)"}
-        """
-        try:
-            amostra = self.get_object()
-            agreement = request.data.get('agreement', 'Sistema Web GAIA')
-
-            # Validar tamanho para evitar DoS via string gigante
-            if len(str(agreement)) > _MAX_AGREEMENT_LEN:
-                return Response(
-                    {'error': f'Agreement deve ter no máximo {_MAX_AGREEMENT_LEN} caracteres'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Gerar PDF
-            pdf_buffer = WebReportGenerator.generate_pdf_for_sample(
-                amostra.id,
-                agreement=agreement
-            )
-            
-            if pdf_buffer is None:
-                return Response(
-                    {'error': 'Erro ao gerar PDF'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            
-            # Criar registro de laudo
-            laudo = Laudo.objects.create(
-                numero_amostra=amostra.numero_amostra,
-                data_coleta=amostra.data_coleta,
-                propriedade=amostra.propriedade,
-                ativo=True
-            )
-            
-            # Retornar PDF como download
-            response = FileResponse(
-                pdf_buffer,
-                content_type='application/pdf'
-            )
-            response['Content-Disposition'] = f'attachment; filename="Laudo_{laudo.id}_Amostra_{amostra.numero_amostra}.pdf"'
-            
-            return response
-            
-        except Amostra.DoesNotExist:
-            return Response(
-                {'error': 'Amostra não encontrada'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
     # ========== ENDPOINT DE INFO PARA SOFTWARE DESKTOP ==========
 @api_view(['GET'])

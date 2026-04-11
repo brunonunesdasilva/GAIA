@@ -47,8 +47,9 @@ class SQLiteRow:
 class DatabaseHTTPWrapper:
     """Wrapper 100% compatível com o DatabaseSQLite antigo"""
     
-    def __init__(self, api_url: str = "http://localhost:8000"):
-        self.base_url = api_url.rstrip('/')
+    def __init__(self, api_url: str | None = None):
+        resolved_api_url = api_url or os.getenv("GAIA_API_URL", "http://localhost:8000")
+        self.base_url = resolved_api_url.rstrip('/')
         self.token: Optional[str] = None
         self.last_auth_error: str = ""
         self.headers = {
@@ -203,11 +204,14 @@ class DatabaseHTTPWrapper:
 
             if not self.token:
                 if not self._auto_login():
+                    auth_reason = self.last_auth_error or "Sem detalhe retornado pelo endpoint de login"
                     raise RuntimeError(
-                        f"Nao foi possivel conectar ao servidor. Verifique:\n"
-                        f"1. Se o servidor esta rodando em {self.base_url}\n"
-                        f"2. Se auth_config.json esta configurado corretamente\n"
-                        f"3. Se o usuario existe no banco de dados"
+                        f"Nao foi possivel autenticar no servidor. Verifique:\n"
+                        f"1. URL da API: {self.base_url}\n"
+                        f"2. Endpoint de login: {self.base_url}/api/login/cpf/desktop/\n"
+                        f"3. auth_config.json com CPF/senha validos no ambiente de producao\n"
+                        f"4. Usuario existe no banco de dados do Render e nao esta bloqueado\n"
+                        f"Detalhe da autenticacao: {auth_reason}"
                     )
 
             headers = self.headers.copy()

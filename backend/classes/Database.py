@@ -1,6 +1,7 @@
 # Novo Database.py para software desktop (API Django)
 from typing import List, Dict
 import importlib
+import os
 from backend.classes.Address import Address
 from backend.classes.Property import Property
 
@@ -9,13 +10,15 @@ from backend.classes.Property import Property
 class Database:
     """Wrapper para manter compatibilidade total com código existente"""
     
-    def __init__(self, use_api: bool = True, api_url: str = "http://localhost:8000"):
+    def __init__(self, use_api: bool = True, api_url: str | None = None):
         self.use_api = use_api
         self.db = None
 
+        resolved_api_url = api_url or os.getenv("GAIA_API_URL", "http://localhost:8000")
+
         if use_api:
             from backend.classes.DatabaseHTTPWrapper import DatabaseHTTPWrapper
-            self.db = DatabaseHTTPWrapper(api_url=api_url)
+            self.db = DatabaseHTTPWrapper(api_url=resolved_api_url)
             print("[API] Modo API Django ativado")
 
             # Fallback opcional (DESATIVADO): se a API cair, trocar para SQLite local.
