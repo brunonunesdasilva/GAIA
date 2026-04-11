@@ -134,7 +134,7 @@ def login_with_cpf_secure(request):
                     value=access_token,
                     httponly=True,
                     secure=not settings.DEBUG,
-                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    samesite='None' if not settings.DEBUG else 'Lax',
                     max_age=3600,
                     path='/'
                 )
@@ -143,7 +143,7 @@ def login_with_cpf_secure(request):
                     value=refresh_token,
                     httponly=True,
                     secure=not settings.DEBUG,
-                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    samesite='None' if not settings.DEBUG else 'Lax',
                     max_age=7 * 24 * 3600,
                     path='/'
                 )
@@ -270,7 +270,7 @@ def login_with_cnpj_secure(request):
                     value=access_token,
                     httponly=True,
                     secure=not settings.DEBUG,
-                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    samesite='None' if not settings.DEBUG else 'Lax',
                     max_age=3600,
                     path='/'
                 )
@@ -279,7 +279,7 @@ def login_with_cnpj_secure(request):
                     value=refresh_token,
                     httponly=True,
                     secure=not settings.DEBUG,
-                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    samesite='None' if not settings.DEBUG else 'Lax',
                     max_age=7 * 24 * 3600,
                     path='/'
                 )
@@ -571,7 +571,7 @@ def refresh_token_from_cookie(request):
                 value=new_access,
                 httponly=True,
                 secure=not settings.DEBUG,
-                samesite='Strict' if not settings.DEBUG else 'Lax',
+                samesite='None' if not settings.DEBUG else 'Lax',
                 max_age=3600,
                 path='/'
             )
@@ -580,7 +580,7 @@ def refresh_token_from_cookie(request):
                 value=new_refresh,
                 httponly=True,
                 secure=not settings.DEBUG,
-                samesite='Strict' if not settings.DEBUG else 'Lax',
+                samesite='None' if not settings.DEBUG else 'Lax',
                 max_age=7 * 24 * 3600,
                 path='/'
             )
