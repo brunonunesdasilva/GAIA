@@ -274,7 +274,7 @@ AUTH_USER_MODEL = 'authentication.Usuario'
 
 SYNC_CONFIG = {
     'SQLITE_PATH': os.path.join(BASE_DIR, 'soil_analysis.db'),
-    'PG_CONN_STRING': config("SYNC_PG_CONN_STRING")  # Conexão completa para PostgreSQL
+    'PG_CONN_STRING': config("SYNC_PG_CONN_STRING", default='')  # Opcional em produção
 }
 
 # --- CONFIGURAÇÃO DE ENVIO DE E-MAIL REAL (GMAIL) ---
