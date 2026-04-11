@@ -4,6 +4,9 @@
 // O navegador automaticamente envia cookies com cada requisição
 import axios from "axios";
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://gaia-2spq.onrender.com").replace(/\/$/, "");
+const API_ROOT = `${API_BASE_URL}/api`;
+
 // ============================================================
 // UTILIDADE: Extrair valor de cookie pelo nome
 // ============================================================
@@ -23,7 +26,7 @@ function getCookie(name) {
 }
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api/",
+  baseURL: `${API_ROOT}/`,
   withCredentials: true,  //  Envia cookies automaticamente (httpOnly)
 });
 
@@ -60,7 +63,7 @@ api.interceptors.response.use(
           
           // Backend vai renovar o refresh_token cookie e retornar novo access_token
           await axios.post(
-            'http://localhost:8000/api/token/refresh-cookie/',
+            `${API_ROOT}/token/refresh-cookie/`,
             {},
             { withCredentials: true }
           );

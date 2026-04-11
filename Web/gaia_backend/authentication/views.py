@@ -885,7 +885,7 @@ def forgot_password(request):
         user = Usuario.objects.get(email=email)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        frontend_base = settings.FRONTEND_URL
         reset_link = f"{frontend_base.rstrip('/')}/reset-password?uid={uid}&token={token}"
 
         subject = 'Recuperação de Senha - GAIA'

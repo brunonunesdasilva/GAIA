@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/api"; // URL base do seu backend
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://gaia-2spq.onrender.com").replace(/\/$/, "");
+const API_URL = `${API_BASE_URL}/api`;
 
 export async function loginSecureCPF(cpf, password, captchaToken = null, captchaAnswer = null) {
   try {

@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://gaia-2spq.onrender.com").replace(/\/$/, "");
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api", // sua API Django
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 export default api;
