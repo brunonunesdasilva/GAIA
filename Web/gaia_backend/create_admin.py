@@ -9,21 +9,43 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# Defina os dados do seu admin aqui
-username = "admin"
-email = "admin@gmail.com"
-password = "senha134"
-cpf = "12345678901"
-first_name = "Admin"
+def env_flag(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
 
-if not User.objects.filter(username=username).exists():
+
+if not env_flag("CREATE_SUPERUSER", "false"):
+    print("CREATE_SUPERUSER desativado. Nada a fazer.")
+    raise SystemExit(0)
+
+username = os.getenv("DJANGO_SUPERUSER_USERNAME", "").strip()
+email = os.getenv("DJANGO_SUPERUSER_EMAIL", "").strip()
+password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "").strip()
+cpf = os.getenv("DJANGO_SUPERUSER_CPF", "").strip()
+first_name = os.getenv("DJANGO_SUPERUSER_FIRST_NAME", "Admin").strip()
+
+missing = [
+    key
+    for key, value in [
+        ("DJANGO_SUPERUSER_USERNAME", username),
+        ("DJANGO_SUPERUSER_EMAIL", email),
+        ("DJANGO_SUPERUSER_PASSWORD", password),
+        ("DJANGO_SUPERUSER_CPF", cpf),
+    ]
+    if not value
+]
+
+if missing:
+    print("Variaveis obrigatorias ausentes: " + ", ".join(missing))
+    raise SystemExit(1)
+
+if User.objects.filter(cpf=cpf).exists() or User.objects.filter(username=username).exists():
+    print(f"Superusuario ja existe (username={username}, cpf={cpf}).")
+else:
     User.objects.create_superuser(
         username=username,
         email=email,
         password=password,
         cpf=cpf,
-        first_name=first_name
+        first_name=first_name,
     )
     print(f"Superusuario {username} criado com sucesso!")
-else:
-    print(f"Usuario {username} ja existe.")
