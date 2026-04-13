@@ -871,7 +871,10 @@ def change_password(request):
     
     except Exception as e:
         logger.exception('Erro ao alterar senha')
-        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        payload = {'error': 'Erro interno do servidor'}
+        if getattr(settings, 'DEBUG_ERROR_DETAILS', False):
+            payload['detail'] = str(e)
+        return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @ratelimit(key='ip', rate='5/h', method='POST', block=True)
 @api_view(['POST'])

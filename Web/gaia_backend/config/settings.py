@@ -24,6 +24,9 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: nao rode com debug ligado em producao!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
+# Em produção, mantenha False. Ative temporariamente para debugar respostas 500.
+DEBUG_ERROR_DETAILS = config("DEBUG_ERROR_DETAILS", default=False, cast=bool)
+
 # URL pública do frontend (usada em links de recuperação de senha e integrações web)
 FRONTEND_URL = config("FRONTEND_URL", default="https://gaia-1-xmds.onrender.com")
 
