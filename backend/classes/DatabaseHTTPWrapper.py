@@ -50,6 +50,9 @@ class DatabaseHTTPWrapper:
     def __init__(self, api_url: str | None = None):
         resolved_api_url = api_url or os.getenv("GAIA_API_URL", "http://localhost:8000")
         self.base_url = resolved_api_url.rstrip('/')
+        self.api_timeout = int(os.getenv("GAIA_API_TIMEOUT", "60"))
+        self.login_timeout = int(os.getenv("GAIA_API_LOGIN_TIMEOUT", str(self.api_timeout)))
+        self.request_timeout = int(os.getenv("GAIA_API_REQUEST_TIMEOUT", str(self.api_timeout)))
         self.token: Optional[str] = None
         self.last_auth_error: str = ""
         self.headers = {
@@ -137,7 +140,7 @@ class DatabaseHTTPWrapper:
             response = self.session.post(
                 f"{self.base_url}/api/login/cpf/desktop/",
                 json={"cpf": login_cpf, "password": self.TECH_PASSWORD},
-                timeout=10
+                timeout=self.login_timeout
             )
             
             if response.status_code == 200:
@@ -178,7 +181,7 @@ class DatabaseHTTPWrapper:
             response = self.session.post(
                 f"{self.base_url}/api/login/cpf/desktop/",
                 json={"cpf": login_cpf, "password": login_password},
-                timeout=10,
+                timeout=self.login_timeout,
             )
 
             if response.status_code == 200:
@@ -223,7 +226,7 @@ class DatabaseHTTPWrapper:
                 headers=headers,
                 json=data,
                 params=params,
-                timeout=30
+                timeout=self.request_timeout
             )
 
 
