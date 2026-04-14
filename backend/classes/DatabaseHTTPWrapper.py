@@ -326,10 +326,10 @@ class DatabaseHTTPWrapper:
             # PASSO 1: Criar usuário e enviar email via /api/register/
             usuario_data = {
                 "first_name": name,
-                "cpf": cpf,
+                "cpf": cpf_limpo,
                 "email": email,
                 "phone_number": phone,
-                "data_nascimento": self._format_date(birth_date) if birth_date else None,
+                "data_nascimento": self._format_date(birth_date),
             }
             
             usuario_result = self._make_request("POST", "/api/register/", data=usuario_data)

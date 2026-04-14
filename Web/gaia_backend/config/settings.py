@@ -25,7 +25,7 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 # Em produção, mantenha False. Ative temporariamente para debugar respostas 500.
-DEBUG_ERROR_DETAILS = config("DEBUG_ERROR_DETAILS", default=False, cast=bool)
+# DEBUG_ERROR_DETAILS = config("DEBUG_ERROR_DETAILS", default=False, cast=bool)
 
 # URL pública do frontend (usada em links de recuperação de senha e integrações web)
 FRONTEND_URL = config("FRONTEND_URL", default="https://gaia-1-xmds.onrender.com")
@@ -286,7 +286,10 @@ SYNC_CONFIG = {
 }
 
 # --- CONFIGURAÇÃO DE ENVIO DE E-MAIL REAL (GMAIL) ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND', 
+    default='django.core.mail.backends.smtp.EmailBackend'
+)
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
