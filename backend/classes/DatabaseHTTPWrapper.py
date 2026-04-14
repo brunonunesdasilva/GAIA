@@ -55,6 +55,7 @@ class DatabaseHTTPWrapper:
         self.request_timeout = int(os.getenv("GAIA_API_REQUEST_TIMEOUT", str(self.api_timeout)))
         self.token: Optional[str] = None
         self.last_auth_error: str = ""
+        self.last_upload_error: str = ""
         self.headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'GAIA-Software-Desktop/Compat'
@@ -1921,19 +1922,21 @@ class DatabaseHTTPWrapper:
         Retorna True se sucesso, False caso contrário
         """
         try:
-            pass
+            self.last_upload_error = ""
             
             success = self._upload_report_pdf(laudo_id, file_path)
             
             if success:
-                pass
                 return True
             else:
-                pass
                 return False
         except Exception as e:
-            pass
+            self.last_upload_error = f"Erro inesperado ao enviar PDF: {e}"
             return False
+
+    def get_last_upload_error(self) -> str:
+        """Retorna o último erro detalhado do upload de laudo."""
+        return self.last_upload_error
     
     def delete_report(self, laudo_id: int) -> bool:
         """
@@ -1993,14 +1996,20 @@ class DatabaseHTTPWrapper:
             # Validações locais antes de enviar
             import os
             if not os.path.exists(file_path):
-                pass
+                self.last_upload_error = f"Arquivo nao encontrado: {file_path}"
                 return False
             
             file_size = os.path.getsize(file_path)
+            max_size = 10 * 1024 * 1024
+            if file_size > max_size:
+                self.last_upload_error = (
+                    f"Arquivo muito grande ({file_size} bytes). Maximo permitido: {max_size} bytes"
+                )
+                return False
             
             # Verificar extensão
             if not file_path.lower().endswith('.pdf'):
-                pass
+                self.last_upload_error = "Arquivo invalido: apenas extensao .pdf e permitida"
                 return False
             
             with open(file_path, 'rb') as f:
@@ -2020,16 +2029,21 @@ class DatabaseHTTPWrapper:
                 
                 
                 if response.status_code in [200, 201]:  # 200 OK ou 201 Created
+                    self.last_upload_error = ""
                     return True
                 else:
-                    pass
+                    response_excerpt = (response.text or "").strip().replace("\n", " ")[:400]
+                    self.last_upload_error = (
+                        f"Upload falhou (HTTP {response.status_code}). "
+                        f"Resposta da API: {response_excerpt or 'sem corpo de resposta'}"
+                    )
                     return False
                     
         except FileNotFoundError as e:
-            pass
+            self.last_upload_error = f"Arquivo nao encontrado: {e}"
             return False
         except Exception as e:
-            pass
+            self.last_upload_error = f"Erro inesperado no upload: {e}"
             import traceback
             traceback.print_exc()
             return False

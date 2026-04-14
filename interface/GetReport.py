@@ -134,13 +134,20 @@ class GetReport(QDialog, GetReportDialog):
         if confirm.clickedButton() == sim_button:
             db = Database()
             success = db.upload_signed_report(laudo_id, file_path)
+            error_detail = ""
+            if hasattr(db, 'get_last_upload_error'):
+                try:
+                    error_detail = db.get_last_upload_error() or ""
+                except Exception:
+                    error_detail = ""
             db.close_connection()
             
             if success:
                 widget: AlertWindow = AlertWindow(f"PDF assinado enviado com sucesso para o laudo {laudo_id}!")
                 widget.exec()
             else:
-                widget: AlertWindow = AlertWindow(f"Erro ao enviar PDF assinado.\n\nVerifique o console para mais detalhes.")
+                details_msg = f"\n\nDetalhes:\n{error_detail}" if error_detail else ""
+                widget: AlertWindow = AlertWindow(f"Erro ao enviar PDF assinado.{details_msg}")
                 widget.exec()
     
     def remove_report(self) -> None:
