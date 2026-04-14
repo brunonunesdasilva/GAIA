@@ -27,6 +27,8 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 # Em produção, mantenha False. Ative temporariamente para debugar respostas 500.
 # DEBUG_ERROR_DETAILS = config("DEBUG_ERROR_DETAILS", default=False, cast=bool)
 
+# Em serviços sem storage dedicado (ex.: Render sem bucket), permite servir MEDIA pelo Django.
+SERVE_MEDIA_FILES = config("SERVE_MEDIA_FILES", default=True, cast=bool)
 # URL pública do frontend (usada em links de recuperação de senha e integrações web)
 FRONTEND_URL = config("FRONTEND_URL", default="https://gaia-1-xmds.onrender.com")
 
