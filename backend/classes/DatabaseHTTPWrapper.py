@@ -2013,7 +2013,8 @@ class DatabaseHTTPWrapper:
                 return False
             
             with open(file_path, 'rb') as f:
-                files = {'arquivo_pdf': f}
+                filename = os.path.basename(file_path)
+                files = {'arquivo_pdf': (filename, f, 'application/pdf')}
                 
                 # Remover Content-Type do headers pois requests vai definir automaticamente para multipart
                 headers = {k: v for k, v in self.headers.items() if k != 'Content-Type'}

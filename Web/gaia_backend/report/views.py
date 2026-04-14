@@ -280,10 +280,32 @@ class LaudoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Validação 2: Verificar MIME type
-        ALLOWED_MIME = {'application/pdf', 'application/x-pdf'}
+        # Validação 2: Verificar MIME e assinatura do arquivo.
+        # Alguns clientes HTTP enviam PDF com MIME genérico (ex.: application/octet-stream).
+        allowed_mime = {
+            'application/pdf',
+            'application/x-pdf',
+            'application/octet-stream',
+        }
+        content_type = (arquivo.content_type or '').lower()
 
-        if arquivo.content_type not in ALLOWED_MIME:
+        # Assinatura mínima de PDF: começa com "%PDF-"
+        try:
+            file_signature = arquivo.read(5)
+            arquivo.seek(0)
+        except Exception:
+            file_signature = b''
+
+        is_pdf_signature = file_signature == b'%PDF-'
+
+        if content_type not in allowed_mime and not is_pdf_signature:
+            return Response(
+                {'error': 'Tipo de arquivo inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Se veio como MIME genérico, exige assinatura PDF válida para segurança.
+        if content_type in {'application/octet-stream', ''} and not is_pdf_signature:
             return Response(
                 {'error': 'Tipo de arquivo inválido'},
                 status=status.HTTP_400_BAD_REQUEST
