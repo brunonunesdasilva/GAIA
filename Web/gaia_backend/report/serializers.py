@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
 from authentication.views import validate_data_nascimento
+from django.conf import settings
 
 class AmostraSerializer(serializers.ModelSerializer):
     
@@ -47,6 +48,9 @@ class LaudoSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.arquivo_pdf.url)
+            backend_url = getattr(settings, 'BACKEND_PUBLIC_URL', '')
+            if backend_url:
+                return f"{backend_url.rstrip('/')}{obj.arquivo_pdf.url}"
         return None
     
 class EmpresaSerializer(serializers.ModelSerializer):

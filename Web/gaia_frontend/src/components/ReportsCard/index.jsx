@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoMdDownload } from "react-icons/io";
-import api from "../../api/api";
 import {
   Card,
   Header,
@@ -12,6 +11,17 @@ import {
   Divider,
   NumeroAmostra,
 } from "./styled";
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "https://gaia-2spq.onrender.com"
+).replace(/\/$/, "");
+
+const resolvePdfUrl = (rawUrl) => {
+  if (!rawUrl) return null;
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+};
 
 const ReportCard = ({ data, amostras }) => {
   const [expandido, setExpandido] = useState(false);
@@ -55,57 +65,56 @@ const ReportCard = ({ data, amostras }) => {
       </Header>
 
       <Conteudo $expandido={expandido}>
-        {amostras.map((laudo, index) => (
-          <React.Fragment key={laudo.id}>
-            <div>
-              <NumeroAmostra>
-                <strong>Número da amostra:</strong> {laudo.numero}
-              </NumeroAmostra>
+        {amostras.map((laudo, index) => {
+          const pdfUrl = resolvePdfUrl(laudo.arquivoUrl);
 
-              {laudo.arquivoUrl ? (
-                <ButtonRow>
-                  <a
-                    href={laudo.arquivoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: "none" }}
-                  >
-                    <Button>Visualizar</Button>
-                  </a>
-                  <Button
-                    onClick={async () => {
-                      try {
-                        //  NOVO: Usar axios/api com httpOnly cookies ao invés de fetch manual
-                        const response = await api.get(laudo.arquivoUrl, {
-                          responseType: "blob",
-                        });
+          return (
+            <React.Fragment key={laudo.id}>
+              <div>
+                <NumeroAmostra>
+                  <strong>Número da amostra:</strong> {laudo.numero}
+                </NumeroAmostra>
 
-                        const blob = response.data;
-                        const url = window.URL.createObjectURL(blob);
-
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = laudo.arquivoUrl.split("/").pop(); // nome do arquivo
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      } catch (error) {
-                        console.error("Erro ao baixar o PDF:", error);
-                      }
-                    }}
-                  >
-                    Baixar <IoMdDownload size={20} />
-                  </Button>
-                </ButtonRow>
-              ) : (
-                <p style={{ color: "#999", fontSize: "14px" }}>
-                   Laudo ainda não possui arquivo PDF anexado
-                </p>
-              )}
-            </div>
-            {index < amostras.length - 1 && <Divider />}
-          </React.Fragment>
-        ))}
+                {pdfUrl ? (
+                  <ButtonRow>
+                    <a
+                      href={pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Button>Visualizar</Button>
+                    </a>
+                    <Button
+                      onClick={() => {
+                        try {
+                          const link = document.createElement("a");
+                          link.href = pdfUrl;
+                          link.target = "_blank";
+                          link.rel = "noopener noreferrer";
+                          link.download =
+                            pdfUrl.split("/").pop() || "laudo.pdf";
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        } catch (error) {
+                          console.error("Erro ao baixar o PDF:", error);
+                        }
+                      }}
+                    >
+                      Baixar <IoMdDownload size={20} />
+                    </Button>
+                  </ButtonRow>
+                ) : (
+                  <p style={{ color: "#999", fontSize: "14px" }}>
+                    Laudo ainda não possui arquivo PDF anexado
+                  </p>
+                )}
+              </div>
+              {index < amostras.length - 1 && <Divider />}
+            </React.Fragment>
+          );
+        })}
       </Conteudo>
     </Card>
   );

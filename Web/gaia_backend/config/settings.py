@@ -31,6 +31,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 SERVE_MEDIA_FILES = config("SERVE_MEDIA_FILES", default=True, cast=bool)
 # URL pública do frontend (usada em links de recuperação de senha e integrações web)
 FRONTEND_URL = config("FRONTEND_URL", default="https://gaia-1-xmds.onrender.com")
+BACKEND_PUBLIC_URL = config("BACKEND_PUBLIC_URL", default="https://gaia-2spq.onrender.com")
 
 # PRODUÇÃO: Adicione o domínio do servidor aqui
 ALLOWED_HOSTS = config(
